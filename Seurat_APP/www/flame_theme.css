@@ -1,0 +1,133 @@
+body, .container-fluid {
+    background: linear-gradient(135deg, #111 0%, #FFD600 100%);
+    color: #FFF;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+}
+
+.navbar, .navbar-default {
+    background-color: #D50000 !important;
+    border-bottom: 3px solid #FFD600 !important;
+}
+
+.panel, .well, .card, .tab-content, .tab-pane {
+    background: rgba(34, 34, 34, 0.98);
+    border-radius: 16px;
+    border: 2px solid #FF6F00;
+    box-shadow: 0 0 20px #FFD60055;
+}
+
+h1, h2, h3, .title, .tab-title {
+    color: #FFD600;
+    text-shadow: 1px 1px 6px #D50000;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+hr {
+    border-top: 2px solid #FFEA00;
+}
+
+.btn, .action-button, .btn-default {
+    background: linear-gradient(90deg, #FF6F00, #FFD600);
+    color: #111 !important;
+    border: 2px solid #D50000;
+    border-radius: 20px;
+    font-weight: bold;
+    box-shadow: 0 0 8px #FFD60055;
+    margin-bottom: 7px;
+    transition: background 0.3s, color 0.3s;
+}
+.btn:hover, .action-button:hover, .btn-default:hover {
+    background: linear-gradient(90deg, #FFD600, #FF1744);
+    color: #FFF !important;
+    border-color: #FFD600;
+}
+
+.sidebarPanel {
+    background: rgba(34,0,0,0.95);
+    border-right: 2px solid #FFD600;
+    box-shadow: 4px 0 12px #FF174488;
+}
+
+.mainPanel {
+    background: transparent !important;
+}
+
+input, select, textarea, .form-control {
+    background: #212121 !important;
+    color: #FFD600 !important;
+    border: 1.5px solid #FF6F00 !important;
+    border-radius: 10px;
+}
+
+.dataTable, table, th, td {
+    background: #1a1a1a !important;
+    color: #FFD600 !important;
+    border-color: #FFD600 !important;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    background: #D50000;
+}
+::-webkit-scrollbar-thumb {
+    background: #FFD600;
+    border-radius: 10px;
+}
+
+/* Sparkle keyframes */
+@keyframes flame-spark {
+    0% {
+        box-shadow: 0 0 8px #FFD60055, 0 0 0px #FF1744;
+    }
+    30% {
+        box-shadow: 0 0 12px #FFD600AA, 0 0 6px #FF1744;
+    }
+    70% {
+        box-shadow: 0 0 18px #FFD600AA, 0 0 16px #FF6F00;
+    }
+    100% {
+        box-shadow: 0 0 8px #FFD60055, 0 0 0px #FF1744;
+    }
+}
+
+.btn, .action-button, .btn-default {
+    /* ... your previous button styles ... */
+    transition: background 0.3s, color 0.3s, box-shadow 0.25s;
+}
+
+.btn:hover, .action-button:hover, .btn-default:hover {
+    background: linear-gradient(90deg, #FFD600, #FF1744);
+    color: #FFF !important;
+    border-color: #FFD600;
+    animation: flame-spark 0.6s cubic-bezier(0.66,0,0.34,1) 1;
+}
+
+/* Make tabsetPanel labels/text black */
+.nav-tabs > li > a, 
+.nav-tabs > li > a:focus, 
+.nav-tabs > li > a:hover, 
+.nav-tabs > li.active > a, 
+.nav-tabs > li.active > a:focus, 
+.nav-tabs > li.active > a:hover {
+    color: #111 !important;
+    font-weight: bold;
+    text-shadow: 0 1px 0 #FFD60044;
+    background: transparent;
+}
+
+/* Optional: make selected tab background bright for contrast */
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:focus,
+.nav-tabs > li.active > a:hover {
+    background: #FFD600 !important;
+    border: 1.5px solid #FF6F00 !important;
+    color: #111 !important;
+}
+
+/* For second-level tabsets (if you use them) */
+.tab-content .nav-tabs > li > a {
+    color: #111 !important;
+}
+
+
