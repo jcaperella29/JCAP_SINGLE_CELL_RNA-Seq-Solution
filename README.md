@@ -95,7 +95,27 @@ Columns = sample annotations (group, batch, celltype, etc.)
 
 First column = sample names
 
-Optional:
+#Repo structure
+
+JCAP_SINGLE_CELL_RNA-Seq-Solution/
+│
+├── QC_tool/
+│   └── Insurance_policy_script.R    # Standalone QC and data cleaning script
+│
+├── Seurat_APP/
+│   ├── Insurance_policy_script.R    # Copy for user convenience
+│   ├── Readme.txt                   # How-to instructions shown in-app
+│   ├── app.R                        # The main Shiny app
+│   ├── run_shiny.sbatch             # Example SLURM batch script for app launch on HPC
+│   ├── singularity.def              # Singularity/Apptainer definition file
+│   └── www/
+│       └── flame_theme.css          # Custom app theme
+│
+├── screenshots/                     # Example screenshots for documentation
+│
+├── README.md                        # (This file)
+└── download_subset_infb.R           # Utility script for fetching example data
+
 
 Run QC/preprocessing with the included insure_policy.R script
 
