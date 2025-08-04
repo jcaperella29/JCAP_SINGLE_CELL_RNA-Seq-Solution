@@ -11,6 +11,23 @@ A fully interactive, reproducible pipeline for single-cell RNA-seq analysis and 
 
 ---
 
+## 📸 Screenshots
+
+| PCA Plot                        | UMAP Plot                        |
+|----------------------------------|----------------------------------|
+| ![PCA Plot](screenshots/PCA.png) | ![UMAP Plot](screenshots/UMAP.png) |
+
+| Condition-Only DE Table                            | Pathway Analysis Barplot                           |
+|----------------------------------------------------|----------------------------------------------------|
+| ![Condition-Only Table](screenshots/Condtion_only_table.png) | ![Pathway Barplot](screenshots/Pathway_barplot.png) |
+
+| Volcano Plot                                  | Heatmap                                  |
+|-----------------------------------------------|-------------------------------------------|
+| ![Volcano Plot](screenshots/Volcano_Plot.png) | ![Heatmap](screenshots/heatmap.png)       |
+
+*Explore more features and screenshots in the `screenshots/` folder!*
+
+
 ## **Key Features**
 
 - **Easy interactive analysis:** Upload your data, run PCA, UMAP, DE, pathway enrichment, classification, power analysis—all in one place
