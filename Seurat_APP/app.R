@@ -1,3 +1,4 @@
+
 library(shiny)
 library(Seurat)
 library(ggplot2)
@@ -28,7 +29,7 @@ ui <- fluidPage(
       actionButton("run_celltype_de", "Run DE by Cell Type"),
       actionButton("filter_condition_only", "Find Condition-Only DE Genes"),
       hr(),
-      selectInput("gene_to_plot", "Choose Gene to Plot", choices = NULL),
+
       selectInput("enrichr_db", "Choose EnrichR Database",
                   choices = enrichR::listEnrichrDbs()$libraryName),
       actionButton("enrich_all", "Enrich ALL DE Genes"),
@@ -62,11 +63,11 @@ ui <- fluidPage(
         tabPanel("PCA Plot", plotlyOutput("pca_plot")),
         tabPanel("UMAP Plot", plotlyOutput("umap_plot")),
         tabPanel("Condition DE Table", DTOutput("condition_de_table")),
-        tabPanel("Condition DE Plot", plotOutput("condition_de_plot")),
+        
         tabPanel("Cell Type DE Table", DTOutput("celltype_de_table")),
-        tabPanel("Cell Type DE Plot", plotOutput("celltype_de_plot")),
+        
         tabPanel("Condition-Only DE Table", DTOutput("condition_only_table")),
-        tabPanel("Condition-Only DE Plot", plotOutput("condition_only_plot")),
+        
         
         # Pathway Analysis tabset
         tabPanel("Pathway Analysis",
@@ -214,21 +215,6 @@ server <- function(input, output, session) {
     datatable(rv$condition_only, options = list(pageLength = 10))
   })
   
-  # Plots
-  output$condition_de_plot <- renderPlot({
-    req(input$gene_to_plot, rv$condition_de)
-    VlnPlot(rv$seurat, features = input$gene_to_plot, group.by = "stim") + theme_minimal()
-  })
-  
-  output$celltype_de_plot <- renderPlot({
-    req(input$gene_to_plot, rv$celltype_de)
-    VlnPlot(rv$seurat, features = input$gene_to_plot, group.by = "seurat_annotations") + theme_minimal()
-  })
-  
-  output$condition_only_plot <- renderPlot({
-    req(input$gene_to_plot, rv$condition_only)
-    VlnPlot(rv$seurat, features = input$gene_to_plot, group.by = "stim") + theme_minimal()
-  })
 
   observeEvent(input$run_umap, {
     req(rv$seurat)
@@ -663,3 +649,4 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
+
