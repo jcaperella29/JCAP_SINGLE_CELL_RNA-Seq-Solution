@@ -1,7 +1,20 @@
-
 # insure_policy.R
 library(Seurat)
 library(dplyr)
+# insure_policy.R
+# Quick Seurat QC and pre-processing pipeline
+#
+# USAGE:
+# 1. Edit the file paths below to your own data:
+#      counts <- read.csv("PATH_TO_COUNTS.csv", row.names=1, check.names=FALSE)
+#      meta <- read.csv("PATH_TO_META.csv", row.names=1, check.names=FALSE)
+# 2. Run the script from R or command line:
+#      Rscript insure_policy.R
+# 3. Output:
+#      - Cleaned counts: cleaned_counts.csv
+#      - Cleaned metadata: cleaned_meta.csv
+#      - PCA plot: PCA_group.png
+
 
 # Load raw data
 counts <- read.csv("C:/Users/jcape/Downloads/Seurat_data/ifnb_counts.csv", row.names=1, check.names=FALSE)
@@ -58,3 +71,4 @@ write.csv(as.data.frame(cleaned_counts), "cleaned_counts.csv")
 write.csv(seu@meta.data, "cleaned_meta.csv")
 
 cat("Insure policy checks complete! Cleaned counts and metadata saved.\n")
+
