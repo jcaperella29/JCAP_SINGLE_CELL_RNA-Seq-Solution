@@ -1,5 +1,12 @@
 # JCAP Single Cell RNA-seq Solution
 
+![R](https://img.shields.io/badge/R-4.3.1-blue?logo=R)
+![Shiny](https://img.shields.io/badge/Shiny-Interactive%20Web%20App-blueviolet?logo=R)
+![Seurat](https://img.shields.io/badge/Seurat-Single--Cell%20Analysis-5EC792?logo=rstudio)
+![Singularity](https://img.shields.io/badge/Singularity-Apptainer-6A6BFF?logo=linux)
+![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20HPC-green)
+![License](https://img.shields.io/badge/license-MIT-brightgreen)
+
 A fully interactive, reproducible pipeline for single-cell RNA-seq analysis and visualization, built in R/Shiny and ready for both desktop and high-performance computing environments.
 
 ---
