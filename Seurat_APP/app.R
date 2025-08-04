@@ -1,4 +1,3 @@
-
 library(shiny)
 library(Seurat)
 library(ggplot2)
@@ -28,6 +27,8 @@ ui <- fluidPage(
       actionButton("run_condition_de", "Run DE by Condition"),
       actionButton("run_celltype_de", "Run DE by Cell Type"),
       actionButton("filter_condition_only", "Find Condition-Only DE Genes"),
+      actionButton("make_volcano", "Create Volcano Plot"),
+      
       hr(),
 
       selectInput("enrichr_db", "Choose EnrichR Database",
@@ -67,6 +68,7 @@ ui <- fluidPage(
         tabPanel("Cell Type DE Table", DTOutput("celltype_de_table")),
         
         tabPanel("Condition-Only DE Table", DTOutput("condition_only_table")),
+        tabPanel("Condition-Only Volcano Plot", plotlyOutput("condition_only_volcano")),
         
         
         # Pathway Analysis tabset
@@ -121,6 +123,7 @@ server <- function(input, output, session) {
   
   rv$rf_importance <- NULL
   rv$classify <- list()
+  rv$volcano <- NULL
   
   
   render_enrich_barplot <- function(df) {
@@ -644,9 +647,35 @@ server <- function(input, output, session) {
     
     heat
   })
+  observeEvent(input$make_volcano, {
+    req(rv$condition_only)
+    df <- rv$condition_only
+    # Add -log10 p-value column
+    df$log10p <- -log10(df$p_val_adj + 1e-300)  # Avoid -Inf
+    df$gene <- rownames(df)
+    rv$volcano <- df
+    showNotification("Volcano plot generated!", type = "message")
+  })
+  
+  output$condition_only_volcano <- renderPlotly({
+    req(rv$volcano)
+    plot_ly(rv$volcano, 
+            x = ~avg_log2FC, 
+            y = ~log10p, 
+            text = ~gene, 
+            type = "scatter", 
+            mode = "markers",
+            marker = list(size = 8, opacity = 0.6)) %>%
+      layout(title = "Volcano Plot: Condition-Only DE Genes",
+             xaxis = list(title = "Log2 Fold Change"),
+             yaxis = list(title = "-log10 Adjusted P-value"))
+  })
+  
+  
   
   
 }
 
 shinyApp(ui, server)
+
 
