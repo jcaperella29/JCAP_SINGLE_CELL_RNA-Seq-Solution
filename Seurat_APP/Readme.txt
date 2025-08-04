@@ -1,85 +1,81 @@
-Welcome to JCAP Single Cell RNA-seq solution!
-This app allows you to:
+# Welcome to the JCAP Single Cell RNA-seq Solution!
 
-Explore your single-cell RNA-seq data interactively
+This interactive app lets you:
+- Explore your single-cell RNA-seq data visually and statistically
+- Run differential expression, pathway enrichment, classification, and power analyses—all in your browser
+- Download publication-ready tables and interactive plots for every step
 
-Run differential expression, pathway analysis, classification, and power analysis—all in your browser
+---
 
-Getting Started
-Prepare your files:
+## **Getting Started**
 
-Counts matrix:
+### **1. Prepare Your Data**
+- **Counts Matrix** (CSV)
+  - **Rows:** Genes/features
+  - **Columns:** Cell/sample names
+  - **First column:** Gene names
+  - **First row:** Sample names
+- **Metadata** (CSV)
+  - **Rows:** Cell/sample names (must match counts matrix columns)
+  - **Columns:** Sample annotations (e.g. group, batch, cell type)
+  - **First column:** Sample names
 
-CSV file
+### **2. Upload Your Files**
+- Click **"Upload Counts CSV"** and select your counts matrix file
+- Click **"Upload Metadata CSV"** and select your metadata file
 
-Rows = genes/features, Columns = cell/sample names
+### **3. Create Your Seurat Object**
+- Click **"Create Seurat Object"** to load and normalize your data
 
-First column = gene names, first row = sample names
+---
 
-Metadata:
+## **Analysis Workflow**
 
-CSV file
+- **PCA & UMAP:**  
+  Visualize clusters and patterns in reduced dimensions
 
-Rows = cell/sample names (must match columns in counts)
+- **Differential Expression (DE):**  
+  - Run DE by **condition** and by **cell type**
+  - Find "condition-only" DE genes (not confounded by cell type)
 
-Columns = sample annotations (e.g. group, batch, cell type, etc.)
+- **Pathway Analysis:**  
+  - Enrich DE gene sets (choose from multiple databases)
+  - Results as interactive tables and barplots
 
-First column = sample names
+- **Volcano Plot:**  
+  - Instantly visualize condition-only DE results with a publication-style volcano plot
 
-Upload your files:
+- **Feature Selection & Classification:**  
+  - Identify top marker genes with Random Forest
+  - Classify samples/cells and view performance metrics, ROC curves, and variable importance
 
-Click "Upload Counts CSV" and select your counts matrix file
+- **Power Analysis:**  
+  - Estimate statistical power and minimum sample size for your key DE genes
 
-Click "Upload Metadata CSV" and select your metadata file
+- **Heatmaps:**  
+  - Visualize top features and group differences
 
-Create Seurat object:
+---
 
-Click "Create Seurat Object" to load and normalize your data
+## **Download Results**
+- **Download all tables and results** directly using the buttons in the sidebar
 
-Analysis Workflow
-Run PCA or UMAP:
-Visualize your data in reduced dimensions
+---
 
-Differential Expression:
+## **Tips & Requirements**
 
-Run DE by condition and ,then cell type
+- **Files must be CSV format**
+- **Counts and metadata must match by sample/cell name**
+- For best results, use **quality-filtered data** (see the included `insurance_policy_script.R` for QC)
+- App works best with well-annotated, normalized data
 
-Find condition-only DE genes (not confounded by cell type)
+---
 
-Pathway Analysis:
+## **Need Help?**
+- See the repository README for detailed file examples and troubleshooting tips
+- For questions or feature requests, contact the maintainer or open a GitHub issue
 
-Enrich differentially expressed gene sets (choose database)
+---
 
-Feature Selection & Classification:
+**Happy analyzing!**
 
-Run Random Forest to identify top marker genes
-
-Classify samples/cells using selected genes
-
-Power Analysis:
-
-Estimate statistical power and minimum sample size for key genes
-
-Visualization:
-
-Generate plots for DE, classification, and power analysis
-
-Create heatmaps of top features
-
-Download Results:
-
-Download tables for all analyses using the buttons at the bottom of the sidebar
-
-Tips & Requirements
-Data files must be CSV format and must be pre-filtered for quality (consider using "insurance_policy_script" provided in the repository)
-
-Columns and rows in counts/metadata files must match exactly by sample/cell name
-
-Works best with well-annotated, normalized, and quality-checked datasets
-
-Need Help?
-Check the repository README for detailed file format examples and troubleshooting
-
-For support or feature requests, contact the app maintainer or open an issue
-
-Happy analyzing!
