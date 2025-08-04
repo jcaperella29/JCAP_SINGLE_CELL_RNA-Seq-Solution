@@ -224,6 +224,8 @@ server <- function(input, output, session) {
     showNotification("📉 Running UMAP...", type = "message")
     
     if (!"pca" %in% Reductions(rv$seurat)) {
+       rv$seurat <- FindVariableFeatures(rv$seurat, selection.method = "vst", nfeatures = 2000)
+
       rv$seurat <- ScaleData(rv$seurat, verbose = FALSE)
       rv$seurat <- RunPCA(rv$seurat, verbose = FALSE)
     }
@@ -677,5 +679,6 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
+
 
 
