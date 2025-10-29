@@ -1,50 +1,168 @@
-Welcome to JCAP Single Cell RNA-seq solution!
-This app allows you to:
-•	Explore your single-cell RNA-seq data interactively
-•	Run differential expression, pathway analysis, classification, and power analysis—all in your browser
+🧬 JCAP Single-Cell RNA-seq Solution
 
-Getting Started
-Prepare your files:
-Counts matrix:
-CSV file
-Rows =count, Columns = cells/samples
+Welcome to JCAP Single-Cell RNA-seq Solution!
 
-Metadata:
-CSV file
-Rows = cell/sample names (must match columns in counts)
-Columns = sample annotations (e.g., group, batch, cell type, etc.)
+This interactive Shiny app lets you explore, analyze, and visualize single-cell RNA-seq datasets entirely in your browser — now with multi-species support (Human, Mouse, Zebrafish, and Fly).
 
-Upload your files:
+🚀 What You Can Do
 
-Click the browse button labeled as "Upload Counts CSV" and select your counts matrix file.
+Explore your single-cell data interactively (PCA, UMAP)
 
-Click the browse button labeled as "Upload Metadata CSV" and select your metadata file.
+Run differential expression (DE) by condition and cell type
 
-Create Seurat object:
+Find condition-only DE genes (those not confounded by cell type)
 
-Click "Create Seurat Object" to load and normalize your data
+Perform pathway enrichment across supported species using g:Profiler
 
+Select top marker genes via Random Forest feature selection
 
-Analysis Workflow
+Visualize key genes with the interactive heatmap
 
-Step 1:  Exploratory  Visualization
-Click Run PCA or  Run UMAP. This will allow you to visualize your data in reduced dimensions. The plots will be shown in the tabs labeled as “PCA Plot” and “UMAP Plot.” 
+Estimate power and required sample size
 
- Step 2: Differential Expression
-Click  “Run DE by Condition” then  “Run DE by Cell Type” and  then click “Find  Condition-only DE Genes.” The last set of hits  are the differentially expressed genes that are not confounded by cell type. Tabulated results from each DE analysis will be  shown in the tabs  labeled “Condition DE Table,” “Cell Type DE table” and “Condition -Only De Table.” Lastly,  you can click “Create Volcano Plot”  to create a volcano plot  using the genes in the Condition-Only DE  Table. Note  that the “Condition-Only De  Table” only takes genes that had adjusted p values of .05 or less by condition  and not p values of .05 or less by cell type.
-Step 3 : Pathway Analysis
-After performing DE analysis, you can  map the Condition only DE genes to pathways. To do this, you first need to use the “Choose EnrichR Database” drop down menu to pick the database to use when mapping your genes. Next, click “Enrich ALL DE Genes,” “Enrich Upregulated Genes” and “Enrich Downregulated Genes.”  Results will be shown as tables and barplots in the “Pathway Analysis” tab set. The “All DE Table” and “All DE Barplot” show the results of pathway analysis on all of the condition-only  genes and the other tabs in that tab set show the results of pathways analysis for upregulated and downregulated genes and are labeled as “Upregulated Table,” “Unregulated Barplot,” “Downregulated Table” and “Downregulated Barplot”  respectively.
+Download all results in convenient tables and figures
 
-Step 4: Feature Selection & Classification
-After  performing DE analysis or optionally performing pathway analysis you can further narrow down your hits using   feature selection via random forest. To do so, click “Run Feature  Selection (Random Forest).” This will create a table ranking the DE genes by variable importance. The table will appear in the tab labeled “Variable Importance.” This is the left most tab in the “Random Forest” tab set. Next you can use the numeric input labeled as “Top N Features to Use for Classification” to determine how many genes you will use as predictors in the classification step. Next you can click “Classify via Random Forest” and  the data will be classified via a  Random Forest model and the following objects will be generated - a table showing the model’s predictions, a table showing the model’s performance metrics, a plot of the ROC curve of the model, and a heatmap  showing the correlation between the selected genes (the ones used as predictors) and the condition.
-Step 5 :Power Analysis
-Finally, you can click “Run Power Analysis” to perform Power Analysis  on your dataset. This will generate a table showing the statistical power of the dataset for each of the topmost differentially expressed genes (Shown in the  Power Analysis tab set in “Summary Table”). In the same tab you will see a drop down labeled as ‘Select Gene for Power Curve.” As the label suggests, this lets you pick which gene to focus on for the power curve visualization  that will be displayed in the adjacent tab which is labeled as “Power Curve.” Note that the  dashed red line on the plot shows how many samples would be needed to achieve  80% power for  the selected gene and the actual curve is shown in blue.
-Tips & Requirements
-Data files must be CSV format and must be pre-filtered for quality (consider using "insurance_policy_script" provided in the repository).
-Columns and rows in the counts/metadata files must match exactly by sample/cell name.
-Works best with well-annotated, normalized, and quality-checked datasets.
+🧩 Supported Species
 
-Need Help?
-Check the repository README for detailed file format examples and troubleshooting.
-For support or feature requests, contact the app maintainer or open an issue on GitHub.
+You can seamlessly analyze data from:
+
+Species	Organism Code	Example IDs
+Human	hsapiens	ENSG00000… / Gene symbols
+Mouse	mmusculus	ENSMUSG00000… / Gene symbols
+Zebrafish	drerio	ENSDARG00000…
+Fly	dmelanogaster	FBgn000000…
+
+The app automatically detects whether your dataset uses Ensembl IDs or Gene Symbols, and converts identifiers as needed for enrichment and visualization.
+
+🧱 Getting Started
+1️⃣ Prepare Your Files
+
+Counts Matrix (CSV)
+
+Rows = genes/features
+
+Columns = cell/sample names
+
+First column = gene names
+
+First row = sample names
+
+Metadata (CSV)
+
+Rows = cell/sample names (must match count matrix columns)
+
+Columns = annotations (stim, cell_type, batch, etc.)
+
+Must include:
+
+stim (experimental condition)
+
+cell_type (cell classification)
+
+2️⃣ Upload Your Files
+
+Click Upload Counts CSV → select your count matrix
+
+Click Upload Metadata CSV → select your metadata
+
+3️⃣ Create the Seurat Object
+
+Click “Create Seurat Object”
+
+Your data is normalized
+
+stim and cell_type are automatically converted to factors
+
+Metadata is validated for DE analysis
+
+🔬 Analysis Workflow
+🧠 PCA / UMAP
+
+Visualize global structure of your dataset
+
+Works for all species automatically
+
+⚖️ Differential Expression
+
+Run DE by Condition → contrasts by stim
+
+Run DE by Cell Type → contrasts by cell_type
+
+Find Condition-Only DE Genes → removes overlaps to isolate genes driven purely by condition
+
+🧬 Pathway Enrichment
+
+Click “Enrich (UP)” or “Enrich (DOWN)” to analyze up/down-regulated DE sets
+
+Automatically maps gene IDs for your selected species
+
+Uses g:Profiler2 with GO, Reactome, KEGG, and MSigDB
+
+🌲 Feature Selection & Classification
+
+Run Random Forest to identify top features by MeanDecreaseGini
+
+Table displays ranked genes and importance values
+
+🔥 Heatmap
+
+Click “Run Heatmap 🔥”
+
+Displays expression for top 10 RF genes, prioritizing those also condition-specific
+
+Works across all supported species with automatic ID translation
+
+Interactive via Plotly (rf_heatmap output)
+
+📊 Power Analysis
+
+Estimate statistical power and required sample size for key DE genes
+
+💾 Download Results
+
+Each major analysis block has a Download button to export:
+
+DE tables (condition, celltype, and condition-only)
+
+Enrichment tables (UP, DOWN, ALL)
+
+Random Forest importance table
+
+Power analysis results
+
+🧠 Tips & Requirements
+
+Files must be CSVs and match exactly by sample/cell name
+
+Data should be pre-filtered and normalized
+
+For best results, use the included insurance_policy_script to QC your input
+
+Works with both Ensembl IDs and Gene Symbols automatically
+
+🛠️ Tech Overview
+
+Built with R + Shiny + Seurat + gprofiler2 + plotly
+
+Modular server observers:
+
+create_seurat — normalization & metadata handling
+
+run_condition_de, run_celltype_de, filter_condition_only — differential expression
+
+enrich_up, enrich_down, enrich_all — pathway enrichment
+
+run_rf — feature selection
+
+run_heatmap — multi-species top-gene visualization
+
+❓Need Help?
+
+See examples and test datasets in the repository
+
+Check logs for notifications (messages appear in the bottom-right corner)
+
+For questions or feature requests, open an issue or contact the maintainer
+
 Happy analyzing!
+— JCAP Bioinformatics Team 🧬
