@@ -33,30 +33,32 @@ From: rocker/r-ver:4.3.1
         ca-certificates \
         wget
 
-    # --- Install R packages ---
-    Rscript -e "install.packages(c('shiny', 'remotes', 'BiocManager'), repos='https://cloud.r-project.org')"
+    # --- Base R helpers ---
+    Rscript -e "install.packages(c('shiny','remotes','BiocManager'), repos='https://cloud.r-project.org')"
 
-    # --- Matrix dependency (>=1.6.4), install explicitly ---
+    # --- Matrix (>=1.6.4) pin for SeuratObject ---
     wget https://cran.r-project.org/src/contrib/Archive/Matrix/Matrix_1.6-5.tar.gz
     R CMD INSTALL Matrix_1.6-5.tar.gz
 
-    # --- Extra dependencies for SeuratObject ---
-    Rscript -e "install.packages(c('sp', 'future', 'future.apply', 'progressr', 'spam', 'generics', 'RcppEigen'), repos='https://cloud.r-project.org')"
+    # --- Extra dependencies for Seurat/SeuratObject & common pipelines ---
+    Rscript -e "install.packages(c( \
+        'sp','future','future.apply','progressr','spam','generics','RcppEigen', \
+        'ggplot2','DT','plotly','randomForest','caret','markdown','pwr','RColorBrewer','lattice', \
+        'ggrepel','uwot','RANN','RcppAnnoy','sctransform','pROC','data.table','patchwork','e1071', \
+        'gprofiler2','enrichR' \
+      ), repos='https://cloud.r-project.org')"
 
-    # --- SeuratObject >=5.0.2 ---
+    # --- SeuratObject >= 5.0.2 (pin) ---
     wget https://cran.r-project.org/src/contrib/Archive/SeuratObject/SeuratObject_5.0.2.tar.gz
     R CMD INSTALL SeuratObject_5.0.2.tar.gz
 
-    # --- Seurat (from GitHub) ---
+    # --- Seurat (from GitHub, current v5.x) ---
     Rscript -e "remotes::install_github('satijalab/seurat')"
 
-    # --- Other app R packages ---
-    Rscript -e "install.packages(c('ggplot2', 'DT', 'plotly', 'enrichR', 'randomForest', 'caret', 'markdown', 'pwr', 'RColorBrewer', 'lattice'), repos='https://cloud.r-project.org')"
-
+    # --- cleanup ---
     apt-get clean
     rm -rf /var/lib/apt/lists/*
-    rm Matrix_1.6-5.tar.gz
-    rm SeuratObject_5.0.2.tar.gz
+    rm -f Matrix_1.6-5.tar.gz SeuratObject_5.0.2.tar.gz
 
 %files
     app.R /srv/shiny-server/app/
