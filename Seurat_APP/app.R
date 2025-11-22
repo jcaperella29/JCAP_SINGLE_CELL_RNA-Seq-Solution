@@ -98,6 +98,9 @@ ui <- fluidPage(
       downloadButton("download_enrich_all", "Enrichment: All"),
       downloadButton("download_enrich_up", "Enrichment: Up"),
       downloadButton("download_enrich_down", "Enrichment: Down"),
+      downloadButton("download_enrich_all_edges",  "Enrichment: All Term–Gene Edges"),   # 🆕
+     downloadButton("download_enrich_up_edges",   "Enrichment: Up Term–Gene Edges"),    # 🆕
+      downloadButton("download_enrich_down_edges", "Enrichment: Down Term–Gene Edges"),  # 🆕
       downloadButton("download_rf_importance", "Random Forest Importance"),
       downloadButton("download_rf_predictions", "RF Predictions"),
       downloadButton("download_rf_metrics", "RF Metrics"),
@@ -656,40 +659,46 @@ run_gprof <- function(genes, org) {
     ggplotly(p)
   })
  
-  # ALL
-  observeEvent(input$enrich_all, {
-    req(rv$condition_only)
-    showNotification("🔬 Enriching ALL DE genes...", type = "message")
-    genes <- rownames(rv$condition_only)
-    tbl <- do_enrichment(genes, input$species)
-    rv$enrich$all <- tbl
-    if (is.null(tbl)) showNotification("No terms returned (ALL).", type = "warning")
-    showNotification("✅ Enrichment complete (ALL).", type = "message")
-  })
+# ALL
+observeEvent(input$enrich_all, {
+  req(rv$condition_only)
+  showNotification("🔬 Enriching ALL DE genes...", type = "message")
+  genes <- rownames(rv$condition_only)
+  tbl <- do_enrichment(genes, input$species)
+  rv$enrich$all <- tbl
+  rv$enrich_edges$all <- make_edges(tbl)   # 🆕 term–gene edges
+  if (is.null(tbl)) showNotification("No terms returned (ALL).", type = "warning")
+  showNotification("✅ Enrichment complete (ALL).", type = "message")
+})
+
   
-  # UP
-  observeEvent(input$enrich_up, {
-    req(rv$condition_only)
-    showNotification("🔬 Enriching UP genes...", type = "message")
-    de <- rv$condition_only
-    genes <- rownames(de[de$avg_log2FC > 0, , drop = FALSE])
-    tbl <- do_enrichment(genes, input$species)
-    rv$enrich$up <- tbl
-    if (is.null(tbl)) showNotification("No terms returned (UP).", type = "warning")
-    showNotification("✅ Enrichment complete (UP).", type = "message")
-  })
-  
-  # DOWN
-  observeEvent(input$enrich_down, {
-    req(rv$condition_only)
-    showNotification("🔬 Enriching DOWN genes...", type = "message")
-    de <- rv$condition_only
-    genes <- rownames(de[de$avg_log2FC < 0, , drop = FALSE])
-    tbl <- do_enrichment(genes, input$species)
-    rv$enrich$down <- tbl
-    if (is.null(tbl)) showNotification("No terms returned (DOWN).", type = "warning")
-    showNotification("✅ Enrichment complete (DOWN).", type = "message")
-  })
+# UP
+observeEvent(input$enrich_up, {
+  req(rv$condition_only)
+  showNotification("🔬 Enriching UP genes...", type = "message")
+  de <- rv$condition_only
+  genes <- rownames(de[de$avg_log2FC > 0, , drop = FALSE])
+  tbl <- do_enrichment(genes, input$species)
+  rv$enrich$up <- tbl
+  rv$enrich_edges$up <- make_edges(tbl)    # 🆕
+  if (is.null(tbl)) showNotification("No terms returned (UP).", type = "warning")
+  showNotification("✅ Enrichment complete (UP).", type = "message")
+})
+
+ # DOWN
+observeEvent(input$enrich_down, {
+  req(rv$condition_only)
+  showNotification("🔬 Enriching DOWN genes...", type = "message")
+  de <- rv$condition_only
+  genes <- rownames(de[de$avg_log2FC < 0, , drop = FALSE])
+  tbl <- do_enrichment(genes, input$species)
+  rv$enrich$down <- tbl
+  rv$enrich_edges$down <- make_edges(tbl)  # 🆕
+  if (is.null(tbl)) showNotification("No terms returned (DOWN).", type = "warning")
+  showNotification("✅ Enrichment complete (DOWN).", type = "message")
+})
+ 
+
   
   render_enrich_barplot <- function(df, title_txt = "Top Enriched Terms", top_n = 10) {
     req(df, nrow(df) > 0)
@@ -964,6 +973,56 @@ run_gprof <- function(genes, org) {
     showNotification("✅ Heatmap generated.", type = "message")
   })
   
+
+output$download_enrich_all_edges <- downloadHandler(
+  filename = function() {"enrichment_all_edges.csv"},
+  content = function(file) {
+    write.csv(rv$enrich_edges$all, file, row.names = FALSE)
+  }
+)
+
+output$download_enrich_up_edges <- downloadHandler(
+  filename = function() {"enrichment_up_edges.csv"},
+  content = function(file) {
+    write.csv(rv$enrich_edges$up, file, row.names = FALSE)
+  }
+)
+
+output$download_enrich_down_edges <- downloadHandler(
+  filename = function() {"enrichment_down_edges.csv"},
+  content = function(file) {
+    write.csv(rv$enrich_edges$down, file, row.names = FALSE)
+  }
+)
+
+output$download_enrich_all_edges <- downloadHandler(
+  filename = function() {"enrichment_all_edges.csv"},
+  content = function(file) {
+    write.csv(rv$enrich_edges$all, file, row.names = FALSE)
+  }
+)
+
+output$download_enrich_up_edges <- downloadHandler(
+  filename = function() {"enrichment_up_edges.csv"},
+  content = function(file) {
+    write.csv(rv$enrich_edges$up, file, row.names = FALSE)
+  }
+)
+
+output$download_enrich_down_edges <- downloadHandler(
+  filename = function() {"enrichment_down_edges.csv"},
+  content = function(file) {
+    write.csv(rv$enrich_edges$down, file, row.names = FALSE)
+  }
+)
+
+
+  
+}
+
+
+
+shinyApp(ui, server)
 
 
 
