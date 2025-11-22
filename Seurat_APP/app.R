@@ -147,51 +147,95 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  rv <- reactiveValues(
-    seurat = NULL,
-    condition_de = NULL,
-    celltype_de = NULL,
-    condition_only = NULL,
-    enrich = list(all = NULL, up = NULL, down = NULL),
-    rf_importance = NULL,
-    classify = list(),
-    volcano = NULL,
-    power_table = NULL,
-    power_curves = NULL
-  )
-  
+rv <- reactiveValues(
+  seurat = NULL,
+  condition_de = NULL,
+  celltype_de = NULL,
+  condition_only = NULL,
+  enrich = list(all = NULL, up = NULL, down = NULL),
+  enrich_edges = list(all = NULL, up = NULL, down = NULL),  # 🆕 term–gene edges
+  rf_importance = NULL,
+  classify = list(),
+  volcano = NULL,
+  power_table = NULL,
+  power_curves = NULL
+)
+
   # ---------- Helpers ----------
-  fmt_enrich_for_table <- function(df) {
-    # Normalize enrichment result columns across backends for tables/plots
-    if (is.null(df) || nrow(df) == 0) return(df)
+
+  # ---- unify to one table shape for BOTH backends ----------------------------
+fmt_enrich_for_table <- function(res) {
+  if (is.null(res) || nrow(res) == 0) return(NULL)
+  
+  # g:Profiler result
+  if (all(c("term_name","term_size","intersection_size","p_value") %in% colnames(res))) {
+    adj_col <- intersect(colnames(res), c("p_adjusted","adjusted_p_value","p_adj"))
+    adj <- if (length(adj_col)) res[[adj_col[1]]] else p.adjust(res$p_value, method = "fdr")
     
-    colmap <- list(
-      term = NA, p_adj = NA
+    # g:Profiler typically has an 'intersection' column with the genes in the term
+    genes_col <- if ("intersection" %in% colnames(res)) res$intersection else NA_character_
+    
+    df <- data.frame(
+      Term = paste0(res$term_name, " (", res$source, ")"),
+      Overlap = paste0(res$intersection_size, "/", res$term_size),
+      P.value = as.numeric(res$p_value),
+      Adjusted.P.value = as.numeric(adj),
+      Genes = genes_col,                                      # 🆕 keep genes per term
+      stringsAsFactors = FALSE, check.names = FALSE
     )
-    
-    # g:Profiler result
-    if (all(c("term_name", "p_value") %in% names(df))) {
-      colmap$term <- df$term_name
-      # g:Profiler returns raw p; it also returns p_value, p_value adjusted? We compute BH on the fly if adj column missing
-      p_adj <- if ("p_value" %in% names(df)) p.adjust(df$p_value, method = "fdr") else df$padj
-      colmap$p_adj <- p_adj
-      out <- df
-      out$Term <- colmap$term
-      out$Adjusted.P.value <- colmap$p_adj
-      return(out)
-    }
-    
-    # Enrichr result
-    if (all(c("Term", "Adjusted.P.value") %in% names(df))) {
-      return(df)
-    }
-    
-    # Fallback: try to detect generic names
-    if ("Description" %in% names(df)) df$Term <- df$Description
-    if ("p.adjust" %in% names(df)) df$Adjusted.P.value <- df$p.adjust
-    df
+    df <- df[order(df$Adjusted.P.value, df$P.value), , drop = FALSE]
+    rownames(df) <- NULL
+    return(df)
   }
   
+  # Enrichr result (already has Term/Overlap/P.value/Adjusted.P.value, often Genes)
+  if (all(c("Term","Overlap","P.value","Adjusted.P.value") %in% colnames(res))) {
+    # If a 'source' column exists, tag the term with it
+    if ("source" %in% colnames(res)) {
+      res$Term <- paste0(res$Term, " (", res$source, ")")
+    } else {
+      res$Term <- paste0(res$Term, " (ENRICHR)")
+    }
+    keep_cols <- intersect(c("Term","Overlap","P.value","Adjusted.P.value","Genes"), colnames(res))
+    df <- res[, keep_cols, drop = FALSE]
+    df <- df[order(df$Adjusted.P.value, df$P.value), , drop = FALSE]
+    rownames(df) <- NULL
+    return(df)
+  }
+  
+  # If Enrichr rbind lost the 'source' attribute but has its own 'source' col
+  if ("source" %in% colnames(res) && all(c("Term","Overlap","P.value","Adjusted.P.value") %in% colnames(res))) {
+    res$Term <- paste0(res$Term, " (", res$source, ")")
+    keep_cols <- intersect(c("Term","Overlap","P.value","Adjusted.P.value","Genes"), colnames(res))
+    df <- res[, keep_cols, drop = FALSE]
+    df <- df[order(df$Adjusted.P.value, df$P.value), , drop = FALSE]
+    rownames(df) <- NULL
+    return(df)
+  }
+  
+  NULL
+}
+make_edges <- function(enrich_tbl) {
+  if (is.null(enrich_tbl) || !"Genes" %in% colnames(enrich_tbl)) return(NULL)
+  
+  tmp <- enrich_tbl[!is.na(enrich_tbl$Genes) & nchar(enrich_tbl$Genes) > 0, c("Term","Genes"), drop = FALSE]
+  if (nrow(tmp) == 0) return(NULL)
+  
+  edges_list <- lapply(seq_len(nrow(tmp)), function(i) {
+    genes <- unlist(strsplit(as.character(tmp$Genes[i]), "[,;]"))
+    data.frame(
+      Term = tmp$Term[i],
+      Gene = trimws(genes),
+      stringsAsFactors = FALSE
+    )
+  })
+  
+  edges <- do.call(rbind, edges_list)
+  edges <- edges[nchar(edges$Gene) > 0, , drop = FALSE]
+  rownames(edges) <- NULL
+  edges
+}
+
   render_enrich_barplot <- function(df) {
     if (is.null(df) || nrow(df) == 0) return(NULL)
     df <- fmt_enrich_for_table(df)
@@ -920,5 +964,6 @@ run_gprof <- function(genes, org) {
     showNotification("✅ Heatmap generated.", type = "message")
   })
   
+
 
 
