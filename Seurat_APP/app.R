@@ -166,58 +166,105 @@ rv <- reactiveValues(
 
   # ---------- Helpers ----------
 
-  # ---- unify to one table shape for BOTH backends ----------------------------
+
+# ---- unify to one table shape for BOTH backends ----------------------------
+# tries hard to pull a "genes in term" column from whatever the backend returns
 fmt_enrich_for_table <- function(res) {
   if (is.null(res) || nrow(res) == 0) return(NULL)
-  
-  # g:Profiler result
+
+  # helper: find a column that contains the gene list
+  find_gene_list_col <- function(df) {
+    # priority candidates we know about
+    candidates <- c("Genes", "genes", "GENES", "intersection", "intersections")
+    for (nm in candidates) {
+      if (nm %in% colnames(df)) {
+        return(as.character(df[[nm]]))
+      }
+    }
+    # generic fallback: first column whose name contains "gene"
+    idx <- grep("gene", colnames(df), ignore.case = TRUE)
+    if (length(idx) > 0) {
+      return(as.character(df[[idx[1]]]))
+    }
+    # nothing found
+    return(rep(NA_character_, nrow(df)))
+  }
+
+  ## g:Profiler result
   if (all(c("term_name","term_size","intersection_size","p_value") %in% colnames(res))) {
+
+    # adjusted p-value column (or compute FDR if missing)
     adj_col <- intersect(colnames(res), c("p_adjusted","adjusted_p_value","p_adj"))
     adj <- if (length(adj_col)) res[[adj_col[1]]] else p.adjust(res$p_value, method = "fdr")
-    
-    # g:Profiler typically has an 'intersection' column with the genes in the term
-    genes_col <- if ("intersection" %in% colnames(res)) res$intersection else NA_character_
-    
+
+    genes_col <- find_gene_list_col(res)
+
     df <- data.frame(
-      Term = paste0(res$term_name, " (", res$source, ")"),
-      Overlap = paste0(res$intersection_size, "/", res$term_size),
-      P.value = as.numeric(res$p_value),
+      Term             = paste0(res$term_name, " (", res$source, ")"),
+      Overlap          = paste0(res$intersection_size, "/", res$term_size),
+      P.value          = as.numeric(res$p_value),
       Adjusted.P.value = as.numeric(adj),
-      Genes = genes_col,                                      # 🆕 keep genes per term
-      stringsAsFactors = FALSE, check.names = FALSE
+      Genes            = genes_col,   # ✅ actual gene names per pathway
+      stringsAsFactors = FALSE,
+      check.names      = FALSE
     )
+
     df <- df[order(df$Adjusted.P.value, df$P.value), , drop = FALSE]
     rownames(df) <- NULL
     return(df)
   }
-  
-  # Enrichr result (already has Term/Overlap/P.value/Adjusted.P.value, often Genes)
+
+  ## Enrichr result (after rbind from run_enrichr_fallback)
   if (all(c("Term","Overlap","P.value","Adjusted.P.value") %in% colnames(res))) {
-    # If a 'source' column exists, tag the term with it
-    if ("source" %in% colnames(res)) {
-      res$Term <- paste0(res$Term, " (", res$source, ")")
+
+    term <- if ("source" %in% colnames(res)) {
+      paste0(res$Term, " (", res$source, ")")
     } else {
-      res$Term <- paste0(res$Term, " (ENRICHR)")
+      paste0(res$Term, " (ENRICHR)")
     }
-    keep_cols <- intersect(c("Term","Overlap","P.value","Adjusted.P.value","Genes"), colnames(res))
-    df <- res[, keep_cols, drop = FALSE]
+
+    genes_col <- find_gene_list_col(res)
+
+    df <- data.frame(
+      Term             = term,
+      Overlap          = res$Overlap,
+      P.value          = as.numeric(res$P.value),
+      Adjusted.P.value = as.numeric(res$Adjusted.P.value),
+      Genes            = genes_col,   # ✅ whatever gene-list column exists
+      stringsAsFactors = FALSE,
+      check.names      = FALSE
+    )
+
     df <- df[order(df$Adjusted.P.value, df$P.value), , drop = FALSE]
     rownames(df) <- NULL
     return(df)
   }
-  
-  # If Enrichr rbind lost the 'source' attribute but has its own 'source' col
-  if ("source" %in% colnames(res) && all(c("Term","Overlap","P.value","Adjusted.P.value") %in% colnames(res))) {
-    res$Term <- paste0(res$Term, " (", res$source, ")")
-    keep_cols <- intersect(c("Term","Overlap","P.value","Adjusted.P.value","Genes"), colnames(res))
-    df <- res[, keep_cols, drop = FALSE]
+
+  ## If we have both Term/Overlap/etc AND 'source' explicitly
+  if ("source" %in% colnames(res) &&
+      all(c("Term","Overlap","P.value","Adjusted.P.value") %in% colnames(res))) {
+
+    term <- paste0(res$Term, " (", res$source, ")")
+    genes_col <- find_gene_list_col(res)
+
+    df <- data.frame(
+      Term             = term,
+      Overlap          = res$Overlap,
+      P.value          = as.numeric(res$P.value),
+      Adjusted.P.value = as.numeric(res$Adjusted.P.value),
+      Genes            = genes_col,
+      stringsAsFactors = FALSE,
+      check.names      = FALSE
+    )
+
     df <- df[order(df$Adjusted.P.value, df$P.value), , drop = FALSE]
     rownames(df) <- NULL
     return(df)
   }
-  
+
   NULL
 }
+
 make_edges <- function(enrich_tbl) {
   if (is.null(enrich_tbl) || !"Genes" %in% colnames(enrich_tbl)) return(NULL)
   
@@ -333,24 +380,25 @@ make_edges <- function(enrich_tbl) {
   strip_bg <- function(x) x[!grepl("^BG\\d+$", x)]
   
   # ---- g:Profiler with retries (returns data.frame or NULL) ------------------
-  safe_gprof <- function(genes, org, retries = 3, sleep_s = c(0.6, 1.2, 2.4)) {
-    for (i in seq_len(retries)) {
-      try({
-        out <- gprofiler2::gost(
-          query = unique(genes),
-          organism = org,
-          sources = c("GO:BP","GO:MF","GO:CC","REAC","KEGG","MSigDBH","MSigDBC2"),
-          correction_method = "fdr"
-        )
-        if (!is.null(out) && !is.null(out$result) && nrow(out$result) > 0) {
-          return(out$result)
-        }
-      }, silent = TRUE)
-      if (i < retries) Sys.sleep(sleep_s[i])
-    }
-    return(NULL)
+safe_gprof <- function(genes, org, retries = 3, sleep_s = c(0.6, 1.2, 2.4)) {
+  for (i in seq_len(retries)) {
+    try({
+      out <- gprofiler2::gost(
+        query    = unique(genes),
+        organism = org,
+        sources  = c("GO:BP","GO:MF","GO:CC","REAC","KEGG","MSigDBH","MSigDBC2"),
+        correction_method = "fdr",
+        evcodes  = TRUE          # ✅ this makes g:Profiler include 'intersection'
+      )
+      if (!is.null(out) && !is.null(out$result) && nrow(out$result) > 0) {
+        return(out$result)
+      }
+    }, silent = TRUE)
+    if (i < retries) Sys.sleep(sleep_s[i])
   }
-  
+  return(NULL)
+}
+
   # ---- Enrichr fallback; choose libs per species -----------------------------
   fallback_enrichr_libs <- function(org) {
     base <- c("GO_Biological_Process_2021","GO_Molecular_Function_2021",
@@ -373,63 +421,39 @@ make_edges <- function(enrich_tbl) {
     out
   }
   
-  # ---- unify to one table shape for BOTH backends ----------------------------
-  fmt_enrich_for_table <- function(res) {
-    if (is.null(res) || nrow(res) == 0) return(NULL)
-    
-    # g:Profiler result
-    if (all(c("term_name","term_size","intersection_size","p_value") %in% colnames(res))) {
-      adj_col <- intersect(colnames(res), c("p_adjusted","adjusted_p_value","p_adj"))
-      adj <- if (length(adj_col)) res[[adj_col[1]]] else res$p_value
-      df <- data.frame(
-        Term = paste0(res$term_name, " (", res$source, ")"),
-        Overlap = paste0(res$intersection_size, "/", res$term_size),
-        P.value = as.numeric(res$p_value),
-        Adjusted.P.value = as.numeric(adj),
-        stringsAsFactors = FALSE, check.names = FALSE
-      )
-      df <- df[order(df$Adjusted.P.value, df$P.value), , drop = FALSE]
-      rownames(df) <- NULL
-      return(df)
-    }
-    
-    # Enrichr result (already has Term/Overlap/P.value/Adjusted.P.value)
-    if (all(c("Term","Overlap","P.value","Adjusted.P.value") %in% colnames(res))) {
-      df <- res[, c("Term","Overlap","P.value","Adjusted.P.value"), drop = FALSE]
-      df$Term <- paste0(df$Term, " (", attr(res, "source", exact = TRUE) %||% "ENRICHR", ")")
-      df <- df[order(df$Adjusted.P.value, df$P.value), , drop = FALSE]
-      rownames(df) <- NULL
-      return(df)
-    }
-    
-    # If Enrichr rbind lost the 'source' attribute, try to append from raw col if present
-    if ("source" %in% colnames(res) && all(c("Term","Overlap","P.value","Adjusted.P.value") %in% colnames(res))) {
-      res$Term <- paste0(res$Term, " (", res$source, ")")
-      df <- res[, c("Term","Overlap","P.value","Adjusted.P.value"), drop = FALSE]
-      df <- df[order(df$Adjusted.P.value, df$P.value), , drop = FALSE]
-      rownames(df) <- NULL
-      return(df)
-    }
-    
-    NULL
-  }
   
   # ---- single entry point to run enrichment with fallback --------------------
-  do_enrichment <- function(genes, species_label) {
-    genes <- strip_bg(genes)
-    if (length(genes) < 3) return(NULL)
-    
+   # ---- single entry point to run enrichment with chosen backend --------------
+do_enrichment <- function(genes, species_label) {
+  genes <- strip_bg(genes)
+  if (length(genes) < 3) return(NULL)
+
+  backend <- input$enrich_backend  # "gprof" or "enrichr"
+
+  if (backend == "gprof") {
+    ## g:Profiler path (multi-species)
     org <- gp_org(species_label)
     if (is.null(org)) return(NULL)
-    
+
     gp_res <- safe_gprof(genes, org)
-    if (!is.null(gp_res)) return(fmt_enrich_for_table(gp_res))
-    
-    # fallback to Enrichr
-    enr_res <- run_enrichr_fallback(genes, org)
-    fmt_enrich_for_table(enr_res)
+    if (is.null(gp_res)) return(NULL)
+
+    return(fmt_enrich_for_table(gp_res))
   }
-  
+
+  ## Enrichr path
+  db <- input$enrichr_db
+  if (is.null(db) || !nzchar(db)) return(NULL)
+
+  er <- tryCatch(
+    enrichR::enrichr(unique(genes), db),
+    error = function(e) NULL
+  )
+  if (is.null(er) || is.null(er[[db]]) || nrow(er[[db]]) == 0) return(NULL)
+
+  return(fmt_enrich_for_table(er[[db]]))
+}
+ 
   # ---- barplot used by All/Up/Down ------------------------------------------
   render_enrich_barplot <- function(df, title_txt = "Top Enriched Terms", top_n = 10) {
     req(df, nrow(df) > 0)
@@ -1023,6 +1047,7 @@ output$download_enrich_down_edges <- downloadHandler(
 
 
 shinyApp(ui, server)
+
 
 
 
